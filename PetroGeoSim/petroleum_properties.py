@@ -1,5 +1,5 @@
-from montepetro.models import Model
-from montepetro.properties import RegionalProperty
+from PetroGeoSim.models import Model
+from PetroGeoSim.properties import RegionalProperty
 import numpy as np
 
 class OriginalOilInPlace(RegionalProperty):

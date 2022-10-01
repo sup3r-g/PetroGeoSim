@@ -3,8 +3,8 @@ from typing import Any
 from joblib import Parallel, cpu_count, delayed
 from numpy.random import SeedSequence
 
-from montepetro.models import Model
-from montepetro.petroleum_properties import ModelOriginalOilInPlace, OriginalOilInPlace
+from PetroGeoSim.models import Model
+from PetroGeoSim.petroleum_properties import ModelOriginalOilInPlace, OriginalOilInPlace
 
 
 class Simulation:

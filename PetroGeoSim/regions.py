@@ -2,7 +2,7 @@ import json
 import os.path
 from typing_extensions import Self
 
-from montepetro.properties import Property
+from PetroGeoSim.properties import Property
 
 
 class Region:

@@ -6,8 +6,8 @@ from typing_extensions import Self
 
 from numpy.random import SeedSequence
 
-from montepetro.properties import Property
-from montepetro.regions import Region
+from PetroGeoSim.properties import Property
+from PetroGeoSim.regions import Region
 
 
 class Model:

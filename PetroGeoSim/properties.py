@@ -5,7 +5,7 @@ from typing_extensions import Self
 import numpy as np
 from numpy.random import Generator
 
-from montepetro.distributions import BIT_GENERATORS, SCIPY_DISTRIBUTIONS
+from PetroGeoSim.distributions import BIT_GENERATORS, SCIPY_DISTRIBUTIONS
 
 
 class Property:
