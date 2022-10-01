@@ -1,4 +1,3 @@
-__author__ = 'lmosser'
 from montepetro.properties import Property, RandomProperty
 from montepetro.regions import Region
 from montepetro.seed_generators import SeedGenerator

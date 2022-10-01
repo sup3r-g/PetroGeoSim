@@ -21,7 +21,7 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/LukasMosser/MontePetro',
-    download_url = 'https://github.com/LukasMosser/MontePetro/tarball/0.3.6',
+    download_url='https://github.com/LukasMosser/MontePetro/tarball/0.3.6',
     # Author details
     author='Lukas Mosser',
     author_email='lukas.mosser@gmail.com',
@@ -45,7 +45,7 @@ setup(
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
     # $ pip install -e .[dev,test]
-    extras_require = {
+    extras_require={
         'dev': ['check-manifest'],
         'test': ['coverage', 'nose'],
                      }

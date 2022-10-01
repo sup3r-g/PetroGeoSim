@@ -1,4 +1,3 @@
-__author__ = 'lmosser'
 import unittest
 import os
 
@@ -14,7 +13,7 @@ from montepetro.json_parser import JSONParser
 from montepetro.regions import Region
 from montepetro.seed_generators import SeedGenerator
 from montepetro.models import Model
-from montepetro.utils import truncated_normal_rvs, constant_value
+from montepetro.utils import truncated_normal_rvs
 
 
 class TestRandomGenerators(unittest.TestCase):
@@ -163,8 +162,8 @@ class TestSeedGenerator(unittest.TestCase):
         seed_generator_a = SeedGenerator(self.seed)
         seed_generator_a.seed_random_function = mock_random_seed_function
 
-        print seed_generator_a.request_seed()
-        print seed_generator_a.seeds
+        print(seed_generator_a.request_seed())
+        print(seed_generator_a.seeds)
         self.assertRaises(ValueError, seed_generator_a.request_seed)
 
         seed_generator_a = SeedGenerator(self.seed)
@@ -354,9 +353,6 @@ class TestUtils(unittest.TestCase):
         self.assertNotEqual(a, None)
         b = truncated_normal_rvs(low=0.0, high=1.0, mean=0.5, std=0.1)
         self.assertEqual(0<b<1.0, True)
-
-    def test_constant_value(self):
-        self.assertEqual(constant_value(value=1.0), 1.0)
 
     def tearDown(self):
         pass
