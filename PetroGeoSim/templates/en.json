@@ -1,0 +1,62 @@
+{
+  "Areas": [
+    "s",
+    "uniform"
+  ],
+  "Total thickness": [
+    "h",
+    "normal"
+  ],
+  "Reservoir thickness": [
+    "hef",
+    "normal"
+  ],
+  "Porosity": [
+    "poro",
+    "normal"
+  ],
+  "Oil saturation": [
+    "s_o",
+    "triangular"
+  ],
+  "Water saturation": [
+    "s_w",
+    "triangular"
+  ],
+  "Net-to-gross": [
+    "ntg",
+    "triangular"
+  ],
+  "Formation volume factor": [
+    "fvf",
+    "triangular"
+  ],
+  "Expansion factor": [
+    "ef",
+    "triangular"
+  ],
+  "Oil density": [
+    "den",
+    "triangular"
+  ],
+  "Geometric correction factor": [
+    "geomf",
+    "triangular"
+  ],
+  "Top depth": [
+    "top_depth",
+    "triangular"
+  ],
+  "Bottom depth": [
+    "bottom_depth",
+    "triangular"
+  ],
+  "Oil-water contact": [
+    "owc",
+    "triangular"
+  ],
+  "Gas-water contact": [
+    "gwc",
+    "triangular"
+  ]
+}

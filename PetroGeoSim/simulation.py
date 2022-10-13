@@ -8,16 +8,21 @@ from PetroGeoSim.petroleum_properties import ModelOriginalOilInPlace, OriginalOi
 
 
 class Simulation:
+    
+    # __slots__ = ("name", "sim_seed", "num_samples", "parallel", "num_simulations")
+    
     def __init__(
         self,
+        name,
+        config: dict[str, Any],
         *args,
         sim_seed: int | None = None,
         num_samples: int = 100000,
-        config: dict[str, Any],
         num_simulations: int = 1,
         parallel: bool = True,
         **kwargs,
     ) -> None:
+        self.name = name
         if num_simulations <= 1:
             num_simulations = 1
             parallel = False
@@ -33,6 +38,32 @@ class Simulation:
                 self.num_simulations
             )
 
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Simulation) and (
+            self.name,
+            self.sim_seed,
+            self.parallel,
+            self.num_samples,
+            self.num_simulations,
+        ) == (
+            other.name,
+            other.sim_seed,
+            other.parallel,
+            other.num_samples,
+            other.num_simulations,
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.name,
+                self.sim_seed,
+                self.parallel,
+                self.num_samples,
+                self.num_simulations,
+            )
+        )
+
     def __str__(self) -> str:
         pass
 
@@ -42,10 +73,10 @@ class Simulation:
         model.add_regions(model_regions)
 
         random_properties = {}
-        model.add_properties(random_properties)
+        model.add_properties({random_properties})
 
         model.run(self.config)
-        model.add_regional_property("OOIP", OriginalOilInPlace)
+        model.add_result_property("OOIP", OriginalOilInPlace)
 
         ooip = ModelOriginalOilInPlace(model)
         ooip.run_calculation()
