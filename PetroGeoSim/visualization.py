@@ -6,6 +6,7 @@ from PetroGeoSim.properties import Property
 plt.style.use("seaborn-notebook")
 colors = plt.get_cmap("tab10")
 
+
 def visualize_model_result(
     prop: Property,
     bins: int | str = "auto",

@@ -24,7 +24,7 @@ def config_maker(model, user_input: bool = True) -> None:
                     SCIPY_DISTRIBUTION_KWARGS[prop.distribution.name]
                 )
                 params_str = input(
-                    f"Input distibution parameters for ( {param_hint} ) "
+                    f"Input distribution parameters for ( {param_hint} ) "
                     f"of Property {prop_name} in Region {reg_name}"
                 )
                 for param, value in zip(
