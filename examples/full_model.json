@@ -1,0 +1,68 @@
+{
+    "name": "OOIP test",
+    "_comment1": "Почему seed sequence в виде JSON",
+    "_comment2": "Не хватает ещё параметров",
+    "_comment3": "Часть параметров рекомендуется вынести во внешнюю часть",
+    "seed_sequence": {
+        "entropy": 300,
+        "n_children_spawned": 9
+    },
+    "desc": "A simple reservoir model",
+    "regions": {
+        "A": {
+            "name": "A",
+            "composition": "Sandstone",
+            "properties": {
+                "Area": {
+                    "name": "Area",
+                    "desc": null,
+                    "distribution": {
+                        "name": "uniform",
+                        "prop_name": "Area",
+                        "num_samples": 100000,
+                        "seed_sequence": {
+                            "entropy": 300,
+                            "spawn_key": [
+                                0
+                            ]
+                        }
+                    }
+                },
+                "Porosity": {
+                    "name": "Porosity",
+                    "desc": null,
+                    "distribution": {
+                        "name": "truncated normal",
+                        "prop_name": "Porosity",
+                        "num_samples": 100000,
+                        "seed_sequence": {
+                            "entropy": 300,
+                            "spawn_key": [
+                                3
+                            ]
+                        }
+                    }
+                },
+                "Sw": {
+                    "name": "Sw",
+                    "desc": null,
+                    "distribution": {
+                        "name": "triangular",
+                        "prop_name": "Sw",
+                        "num_samples": 100000,
+                        "seed_sequence": {
+                            "entropy": 300,
+                            "spawn_key": [
+                                6
+                            ]
+                        }
+                    }
+                },
+                "OOIP": {
+                    "name": "OOIP",
+                    "desc": null
+                }
+            }
+        }
+    }
+}
