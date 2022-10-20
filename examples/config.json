@@ -1,0 +1,89 @@
+{
+  "_comment": "Здесь привёл возможный пример формата конфигурационного JSON-объекта. Не уверен, нужны ли model_elements",
+  "model_elements": {
+    "Areas": [
+      "s",
+      "uniform"
+    ],
+    "Total thickness": [
+      "h",
+      "normal"
+    ],
+    "Reservoir thickness": [
+      "hef",
+      "normal"
+    ],
+    "Porosity": [
+      "poro",
+      "normal"
+    ],
+    "Oil saturation": [
+      "s_o",
+      "triangular"
+    ],
+    "Water saturation": [
+      "s_w",
+      "triangular"
+    ],
+    "Net-to-gross": [
+      "ntg",
+      "triangular"
+    ],
+    "Formation volume factor": [
+      "fvf",
+      "triangular"
+    ],
+    "Expansion factor": [
+      "ef",
+      "triangular"
+    ],
+    "Oil density": [
+      "den",
+      "triangular"
+    ],
+    "Geometric correction factor": [
+      "geomf",
+      "triangular"
+    ],
+    "Top depth": [
+      "top_depth",
+      "triangular"
+    ],
+    "Bottom depth": [
+      "bottom_depth",
+      "triangular"
+    ],
+    "Oil-water contact": [
+      "owc",
+      "triangular"
+    ],
+    "Gas-water contact": [
+      "gwc",
+      "triangular"
+    ]
+  },
+  "name": "Hello World model",
+  "sim_seed": 42,
+  "num_samples": 1000000,
+  "num_simulations": 10,
+  "parallel": true,
+  "config": {
+    "sample_region": {
+      "s": 1,
+      "h": 25,
+      "hef": 12.5,
+      "poro": 0.2,
+      "s_o": 0.7,
+      "s_w": 0.3,
+      "ntg": 0.4,
+      "fvf": 1,
+      "ef": 1,
+      "den": 0.98,
+      "geomf": 1,
+      "top_depth": 1000,
+      "bottom_depth": 1050,
+      "owc": 1025,
+      "gwc": null
+    }
+  }
+}
