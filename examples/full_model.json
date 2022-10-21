@@ -1,68 +1,60 @@
 {
+    "_comment_global": "В случае корректности все комментарии удалить",
     "name": "OOIP test",
-    "_comment1": "Почему seed sequence в виде JSON",
-    "_comment2": "Не хватает ещё параметров",
-    "_comment3": "Часть параметров рекомендуется вынести во внешнюю часть",
-    "seed_sequence": {
-        "entropy": 300,
-        "n_children_spawned": 9
-    },
+    "_comment_final": "Конфигурационный JSON на верификацию Глебом",
+    "sim_seed": 42,
+    "num_samples": 10000,
+    "num_simulations": 10,
+    "parallel": true,
+    "_comment_n_jobs": "Не уверен насчёт n_jobs, но вроде как их лучше прокидывать с фронта, дать юзеру возможность выбора",
+    "n_jobs": 4,
     "desc": "A simple reservoir model",
-    "regions": {
-        "A": {
-            "name": "A",
+    "config": {
+        "region_name": {
             "composition": "Sandstone",
+            "_comment_properties": "Можно перенести местами desc и название ключа",
             "properties": {
-                "Area": {
-                    "name": "Area",
-                    "desc": null,
+                "s": {
+                    "desc": "Area",
                     "distribution": {
                         "name": "uniform",
-                        "prop_name": "Area",
-                        "num_samples": 100000,
-                        "seed_sequence": {
-                            "entropy": 300,
-                            "spawn_key": [
-                                0
-                            ]
+                        "parameters": {
+                            "min": 1,
+                            "max": 2,
+                            "mean": 1.5,
+                            "std": 0.5
                         }
                     }
                 },
-                "Porosity": {
-                    "name": "Porosity",
-                    "desc": null,
+                "poro": {
+                    "desc": "Porosity",
                     "distribution": {
                         "name": "truncated normal",
-                        "prop_name": "Porosity",
-                        "num_samples": 100000,
-                        "seed_sequence": {
-                            "entropy": 300,
-                            "spawn_key": [
-                                3
-                            ]
+                        "parameters": {
+                            "min": 1,
+                            "max": 2,
+                            "mean": 1.5,
+                            "std": 0.5
                         }
                     }
                 },
-                "Sw": {
-                    "name": "Sw",
-                    "desc": null,
+                "s_w": {
+                    "desc": "Water saturation",
                     "distribution": {
                         "name": "triangular",
-                        "prop_name": "Sw",
-                        "num_samples": 100000,
-                        "seed_sequence": {
-                            "entropy": 300,
-                            "spawn_key": [
-                                6
-                            ]
+                        "parameters": {
+                            "min": 1,
+                            "max": 2,
+                            "mean": 1.5
                         }
                     }
-                },
+                }
+            },
+            "results": {
                 "OOIP": {
-                    "name": "OOIP",
-                    "desc": null
+                    "desc": "optional"
                 }
             }
-        }
+        }}
     }
 }
