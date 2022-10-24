@@ -4,13 +4,12 @@ from joblib import Parallel, cpu_count, delayed
 from numpy.random import SeedSequence
 
 from PetroGeoSim.models import Model
-from PetroGeoSim.petroleum_properties import ModelOriginalOilInPlace, OriginalOilInPlace
 
 
 class Simulation:
-    
+
     # __slots__ = ("name", "sim_seed", "num_samples", "parallel", "num_simulations")
-    
+
     def __init__(
         self,
         name,

@@ -1,78 +1,64 @@
-from typing import Any
+from ast import literal_eval
+from copy import deepcopy
+import json
+import os
+import re
+from typing import Any, TextIO
 from scipy.stats import (
     beta,
     lognorm,
     norm,
-    rv_continuous,
-    rv_discrete,
     triang,
     truncnorm,
     uniform,
 )
-from numpy.random import Generator
+from numpy.random import SeedSequence, default_rng
+from numpy import exp
 
-# SCIPY_DISTRIBUTIONS_MAPPINGS = {
-#     "uniform": "uniform",
-#     "normal": "norm",
-#     "beta": "beta",
-#     "lognormal": "lognorm",
-#     "triangular": "triang",
-#     "truncated normal": "truncnorm",
-# }
-
-# SCIPY_DISTRIBUTIONS_MAPPINGS.update(
-#     dict(reversed(item) for item in SCIPY_DISTRIBUTIONS_MAPPINGS.items())
-# )
-
-
-SCIPY_DISTRIBUTION_KWARGS = {
-    "uniform": {"loc", "scale"},
-    "norm": {"loc", "scale"},
-    "beta": {"a", "b", "loc", "scale"},
-    "lognorm": {"s", "loc", "scale"},
-    "triang": {"c", "loc", "scale"},
-    "truncnorm": {"a", "b", "loc", "scale"},
-}
-
-SCIPY_DISTRIBUTION_CONV = {
-    "uniform": lambda left, right: (
-        left,
-        right - left,
-    ),  # Uniform: loc = left, scale = right-left
-    "norm": lambda loc, scale: (
-        loc,
-        scale,
-    ),  # loc = Mean (mu), scale = Standard Deviation (sigma)
-    "beta": lambda a, b, loc, scale: (
-        a, b, 
-        loc, scale
-    ),
-    "lognorm": (
-        "s",
-        lambda loc: loc,
-        lambda scale: scale,
-    ),  # Lognormal: Suppose a normally distributed random variable X has mean mu and standard deviation sigma. Then Y = exp(X) is lognormally distributed with s = sigma and scale = exp(mu).
-    "triang": lambda left, right, mode: (
-        (mode - left) / (right - left),
-        left,
-        right - left,
-    ),  # Triangular: c = (mode - left) / (right - left), loc = left, scale = right - left c=[0, 1]
-    "truncnorm": lambda left, right, loc, scale: (
-        (left - loc) / scale,
-        (right - loc) / scale,
-        loc,
-        scale,
-    ),  # Truncated normal: a, b = (left - loc) / scale, (right - loc) / scale
+DISTRIBUTIONS_KWARGS = {
+    "uniform": {"min", "max"},
+    "normal": {"mean", "std"},
+    "beta": {"a", "b", "min", "max"},
+    "lognormal": {"std", "shift", "mean"},
+    "triangular": {"mode", "min", "max"},
+    "truncated normal": {"min", "max", "mean", "std"},
 }
 
 
 class Distribution:
-    """Encapsulates the distribution choice logic, unifies
-    init parameters for SciPy and NumPy functions
+    """Encapsulates the distribution choice logic, replaces
+    init parameters for SciPy functions.
+
+    _extended_summary_
+
+    Attributes
+    ----------
+    name : str
+        Name of the function and a lookup key in `SCIPY_NAMES`.
+    num_samples : int, optional
+        Number of samples to draw from the distribution, by default 10000.
+    seed : SeedSequence
+        Exposure in seconds.
+    rng : Generator
+        Exposure in seconds.
+    function : rv_continuous
+        Exposure in seconds.
+
+    Methods
+    -------
+    update(seed, num_samples)
+        Represent the photo in the given colorspace.
+    gamma(n=1.0)
+        Change the photo's gamma exposure.
+    gamma(n=1.0)
+        Change the photo's gamma exposure.
+    gamma(n=1.0)
+        Change the photo's gamma exposure.
     """
 
-    # __slots__ = ("name", "rng", "numpy", "func")
-    SCIPY_DISTRIBUTIONS = {
+    __slots__ = ("name", "num_samples", "seed", "rng", "function", "params")
+
+    SCIPY_NAMES = {
         "uniform": uniform,
         "normal": norm,
         "beta": beta,
@@ -81,96 +67,206 @@ class Distribution:
         "truncated normal": truncnorm,
     }
 
-    def __init__(self, name: str, rng: Generator) -> None:
+    def __init__(self, name: str, num_samples: int = 10000, **kwargs) -> None:
         self.name = name.lower()
-        self.rng = rng
-        self.numpy = False
-        self.func = self._init_func()
+        self.num_samples = num_samples
+        self.seed = SeedSequence()
+        self.rng = default_rng(self.seed)
+        self.function = self._init_func()
+        self.params = kwargs
 
-    def __call__(self, size, *args: Any, **kwargs: Any) -> Any:
-        # Intersept kwargs and preprocess them
-        self._unified_params(*args, **kwargs)
+    def __str__(self) -> str:
+        return (
+            f"* Name: {self.name}\n"
+            f"* Seed: {self.seed}\n"
+            f"* Number of samples: {self.num_samples}\n"
+        )
 
-        # FOR NUMPY FUNCTIONS
-        if self.numpy:
-            values = self.func(size=size, *args, **kwargs)
-
-        # FOR SCIPY FUNCTIONS
-        values = self.func.rvs(
-            size=size, random_state=self.rng, *args, **kwargs
+    def __call__(self, **kwargs: Any) -> Any:
+        if kwargs:
+            self.params = kwargs
+        scipy_params = self._intersept_kwargs(**self.params)
+        values = self.function.rvs(
+            size=self.num_samples,
+            random_state=self.rng,
+            **scipy_params
         )
 
         return values
 
     def _init_func(self):
-        # FOR SCIPY FUNCTIONS
-        func = self.SCIPY_DISTRIBUTIONS.get(self.name, None)
-        if func is not None:
-            self.numpy = False
-            return func
-        # FOR NUMPY FUNCTIONS
-        if hasattr(self.rng, self.name):
-            self.numpy = True
-            return getattr(self.rng, self.name)
-        raise KeyError(
-            "Function with a corresponding name " "not found in SciPy or NumPy"
+        """Initializes the function from the `self.name`.
+
+        Uses the `SCIPY_NAMES` dictionary to look up supported functions,
+        else raises a KeyError.
+
+        Returns
+        -------
+        rv_continuous
+            SciPy function to be used in sampling.
+
+        Raises
+        ------
+        KeyError
+            The supplied function name didn't match anything,
+            hence it is not supported yet.
+        """
+
+        function = self.SCIPY_NAMES.get(self.name, None)
+        if function is not None:
+            return function
+
+        raise KeyError("Function with a corresponding name not supported yet")
+
+    def _intersept_kwargs(self, **kwargs) -> dict[str, Any]:
+        """Intersepts keyword arguments and converts them to SciPy arguments.
+
+        The functions allows to get and convert a more user-friendly version
+        of arguments, specified in `DISTRIBUTIONS_KWARGS` to those
+        understood by SciPy functions.
+
+        Returns
+        -------
+        dict[str, Any]
+            Keyword arguments to be supplied to a SciPy function.
+
+        Raises
+        ------
+        NotImplementedError
+            The supplied function name didn't match anything,
+            hence it is not supported yet.
+        """
+
+        left, right = kwargs.get("min"), kwargs.get("max")
+        mean, std = kwargs.get("mean"), kwargs.get("std")
+        a, b = kwargs.get("a"), kwargs.get("b")
+        shift = kwargs.get("shift")
+        mode = kwargs.get("mode")
+
+        match self.name:
+            case "uniform":  # loc = left, scale = right-left
+                return {"loc": left, "scale": right - left}
+            case "normal":  # loc = Mean (mu), scale = Standard Deviation (sigma)
+                return {"loc": mean, "scale": std}
+            case "beta":  # mode = (a - 1) / (a + b - 2) ; b = (a - 1 - (a - 2)*mode) / mode --->> a = shift+1, b = (a - 1 - (a - 2)*mode) / mode
+                return {"a": a, "b": b, "loc": left, "scale": right}
+            case "lognormal":  # s = sigma, scale = exp(mu), loc = shift (left boundary position)
+                return {"s": std, "loc": shift, "scale": exp(mean)}
+            case "triangular":  # c = (mode - left) / (right - left), loc = left, scale = right - left, c=[0, 1]
+                return {
+                    "c": (mode - left) / (right - left),
+                    "loc": left,
+                    "scale": right - left,
+                }
+            case "truncated normal":  # a, b = (left - loc) / scale, (right - loc) / scale
+                return {
+                    "a": (left - mean) / std,
+                    "b": (right - mean) / std,
+                    "loc": mean,
+                    "scale": std,
+                }
+            case _:
+                raise NotImplementedError("Function not supported yet")
+
+    def update(self, seed: SeedSequence, num_samples: int) -> None:
+        """Updates attributes to match the supplied ones.
+
+        Parameters
+        ----------
+        seed : SeedSequence
+            _description_
+        num_samples : int
+            Number of samples to draw from the distribution.
+        """
+
+        self.num_samples = num_samples
+        self.seed = seed.spawn(1)[0]
+        self.rng = default_rng(self.seed)
+
+    def to_json(
+        self,
+        to_str: bool = True,
+        exclude: tuple | list = (
+            "rng",
+            "function",
+            "num_samples",
+            "seed"
         )
+    ) -> str | None:
+        """Serializes the `Distribution` into a JSON file or a dictionary.
 
-    def _unified_params(self, **kwargs):
-        if not self.numpy:
-            SCIPY_DISTRIBUTION_CONV[self.name]
-            kwargs
-        pass
+        The generated file has a name `{Distribution.name}.json`.
 
+        Parameters
+        ----------
+        to_str : bool, optional
+            Controls the output destination (string or file), by default True.
+        exclude : tuple | list, optional
+            Attributes to not use during serialization, by default ( "rng", "function", "num_samples", "seed" ).
 
-# from numpy.random import (
-#     MT19937,
-#     PCG64,
-#     PCG64DXSM,
-#     SFC64,
-#     Philox,
-# )
+        Returns
+        -------
+        str | None
+            A serialized dictionary or None (writes to file).
+        """
 
-# BIT_GENERATORS = {
-#     "PCG64": PCG64,
-#     "PCG64DXSM": PCG64DXSM,
-#     "MT19937": MT19937,
-#     "Philox": Philox,
-#     "SFC64": SFC64,
-# }
+        json_dict = {
+            slot: deepcopy(getattr(self, slot))
+            for slot in self.__slots__
+            if slot not in exclude
+        }
 
+        # SeedSequence parser using RegEx
+        if "seed" not in exclude:
+            seed_pat = re.compile(r"\(?,?\s+\)?")
+            res = re.split(seed_pat, repr(json_dict["seed"]))
+            seed_kw = {}
+            for part in res[1:-1]:
+                k, v = part.split("=")
+                seed_kw[k] = literal_eval(v)
 
-class UserContinuousDistribution(rv_continuous):
-    """
-    Allows to create user-defined distributions by defining
-    PDF or PPF
-    """
+            # Dictionary clean up
+            json_dict["seed"] = json_dict["seed"].entropy  # seed_kw
 
-    def _pdf(self, x):
-        pass
+        if to_str:
+            return json_dict
 
-    def _cdf(self, x):
-        pass
+        with open(
+            f"Distribution {self.name}.json",
+            "w", encoding="utf-8"
+        ) as fp:
+            json.dump(json_dict, fp=fp, indent=4)
 
+    @classmethod
+    def from_json(cls, io: TextIO, **kwargs) -> "Distribution":
+        """Creates/Deserializes the `Distribution` from a JSON file.
 
-class UserDiscreteDistribution(rv_discrete):
-    """
-    Allows to create user-defined distributions by defining
-    PDF(Probability density function) or PPF(Percent point function)
-    functions as shown below
-    """
+        _extended_summary_
 
-    def _pdf(self, x):
-        pass
+        Parameters
+        ----------
+        io : TextIO
+            A dictionary or a file path with the necessary data.
 
-    def _cdf(self, x):
-        pass
+        Returns
+        -------
+        Distribution
+            An initialized `Distribution` instance.
+        """
 
+        if isinstance(io, dict):
+            json_dict = io
+        else:
+            if os.path.isfile(io):
+                with open(io, "r", encoding="utf-8") as fp:
+                    json_dict = json.load(fp=fp)
 
-# nmin = 0
-# nmax = 50
-# new_distribution = UserContinuousDistribution(
-#     a=nmin, b=nmax, name="My Distribution Name"
-# )
-# N = 50000
-# X = new_distribution.rvs(size=N, random_state=1)
+        json_dict["seed"] = SeedSequence(**json_dict["seed"])
+        json_dict["rng"] = default_rng(json_dict["seed"])
+
+        name = json_dict.pop("name", "normal")
+        distrib = cls(name)
+        for slot, value in json_dict.items():
+            setattr(distrib, slot, value)
+
+        return distrib

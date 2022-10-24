@@ -1,0 +1,127 @@
+{
+    "name": "OOIP test",
+    "seed": 300,
+    "num_samples": 100000,
+    "config": {
+        "A": {
+            "composition": "Sandstone",
+            "inputs": {
+                "Area": {
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 100.0,
+                            "max": 1000.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.0929,
+                            "std": 0.0108
+                        }
+                    }
+                },
+                "Sw": {
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.15,
+                            "mode": 0.05
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "equation": "Area * Porosity * (1.0 - Sw)"
+                }
+            }
+        },
+        "B": {
+            "composition": "Carbonate",
+            "inputs": {
+                "Area": {
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 20.0,
+                            "max": 200.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.1,
+                            "std": 0.1
+                        }
+                    }
+                },
+                "Sw": {
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.2,
+                            "mode": 0.1
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "equation": "Area * Porosity * (1.0 - Sw)"
+                }
+            }
+        },
+        "C": {
+            "composition": "Dolomite",
+            "inputs": {
+                "Area": {
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 200.0,
+                            "max": 1000.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.08,
+                            "std": 0.02
+                        }
+                    }
+                },
+                "Sw": {
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.15,
+                            "mode": 0.05
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "equation": "Area * Porosity * (1.0 - Sw)"
+                }
+            }
+        }
+    }
+}

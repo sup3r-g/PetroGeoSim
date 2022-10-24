@@ -1,0 +1,28 @@
+{
+    "name": "Model",
+    "seed": 300,
+    "num_samples": 100000,
+    "config": {
+        "region_name": {
+            "composition": "Composition",
+            "inputs": {
+                "input_property_name": {
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.0929,
+                            "std": 0.0108
+                        }
+                    }
+                }
+            },
+            "results": {
+                "result_property_name": {
+                    "equation": "s * hef * poro * s_o * ef * den"
+                }
+            }
+        }
+    }
+}

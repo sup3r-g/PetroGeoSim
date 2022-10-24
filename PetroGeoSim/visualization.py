@@ -1,21 +1,23 @@
 import matplotlib.pyplot as plt
 
 from PetroGeoSim.models import Model
-from PetroGeoSim.properties import Property
 
 plt.style.use("seaborn-notebook")
 colors = plt.get_cmap("tab10")
 
+
 def visualize_model_result(
-    prop: Property,
+    model: Model,
     bins: int | str = "auto",
     **kwargs
 ) -> None:
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.hist(prop.values, bins=bins, ec="k", fc=colors(3), lw=0.3)
-    ax.set_xlabel("Original Oil in Place", **kwargs)
+    (name, values), = model.result().items()
+    print(values)
+    ax.hist(values, bins=bins, ec="k", fc=colors(3), lw=0.3)
+    ax.set_xlabel(name, **kwargs)
     ax.set_ylabel("Frequency", **kwargs)
-    ax.set_title("Model Original Oil in Place", **kwargs)
+    ax.set_title(f"Model {name}", **kwargs)
 
 
 def visualize_properties_distributions(
@@ -23,7 +25,11 @@ def visualize_properties_distributions(
     bins: int | str = "auto",
     **kwargs
 ) -> None:
-    properties = model.get_all_properties('values')
+    properties = model.get_all_properties(
+        'values',
+        include=("inputs", "results"),
+        invert_dict=True
+    )
     fig, axes = plt.subplots(
         len(properties), len(model.regions), sharey="row", **kwargs
     )
