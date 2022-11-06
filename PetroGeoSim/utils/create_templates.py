@@ -2,7 +2,7 @@ import json
 
 PETROLEUM_PROPERTIES_TEMPLATES = {
     "Inputs": {
-        "Areas": "s",
+        "Area": "s",
         "Total thickness": "h",
         "Reservoir thickness": "hef",
         "Porosity": "poro",
@@ -18,12 +18,16 @@ PETROLEUM_PROPERTIES_TEMPLATES = {
         "Oil-water contact": "owc",
         "Gas-water contact": "gwc"
     },
-    "Results": {"Total hydrocarbons in-place": "s*hef*poro*s_o*ef*den"},
+    "Results": {
+        "Total hydrocarbons in-place": ("THIP", "s*hef*poro*s_o*ef*den")
+    },
 }
 
-with open('PetroGeoSim/templates/en.json', "w", encoding='utf8') as fp:
-    json.dump(PETROLEUM_PROPERTIES_TEMPLATES, fp=fp, indent=4, ensure_ascii=False)
-    
+with open('../templates/en.json', "w", encoding='utf8') as fp:
+    json.dump(
+        PETROLEUM_PROPERTIES_TEMPLATES, fp=fp, indent=4, ensure_ascii=False
+    )
+
 PETROLEUM_PROPERTIES_TEMPLATES_RU = {
     "Inputs": {
         "Площадь": "s",
@@ -43,9 +47,11 @@ PETROLEUM_PROPERTIES_TEMPLATES_RU = {
         "ГНК": "gwc"
         },
     "Results": {
-        "Геологические запасы нефти": "s*hef*poro*s_o*ef*den"
+        "Геологические запасы нефти": ("THIP", "s*hef*poro*s_o*ef*den")
     },
 }
 
-with open("PetroGeoSim/templates/ru.json", "w", encoding='utf8') as fp:
-    json.dump(PETROLEUM_PROPERTIES_TEMPLATES_RU, fp=fp, indent=4, ensure_ascii=False)
+with open("../templates/ru.json", "w", encoding='utf8') as fp:
+    json.dump(
+        PETROLEUM_PROPERTIES_TEMPLATES_RU, fp=fp, indent=4, ensure_ascii=False
+    )

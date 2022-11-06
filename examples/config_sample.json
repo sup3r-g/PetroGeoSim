@@ -7,6 +7,7 @@
             "composition": "Composition",
             "inputs": {
                 "input_property_name": {
+                    "variable": "s",
                     "distribution": {
                         "name": "truncated normal",
                         "params": {
@@ -20,6 +21,7 @@
             },
             "results": {
                 "result_property_name": {
+                    "variable": "v",
                     "equation": "s * hef * poro * s_o * ef * den"
                 }
             }

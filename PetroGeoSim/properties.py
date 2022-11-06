@@ -6,7 +6,7 @@ from typing import TextIO
 import numpy as np
 
 from PetroGeoSim.distributions import Distribution
-from PetroGeoSim.equation_parser import evaluate
+from PetroGeoSim.utils.equation_parser import evaluate
 
 
 class Property:
@@ -23,7 +23,8 @@ class Property:
     distribution : Distribution | None, optional
         Access to `Distribution` object instance, by default None.
     equation : str | None, optional
-        String representation of equation used in Result calculation, by default None.
+        String representation of equation used in Result calculation,
+        by default None.
     values : Generator
         NumPy Array containing sampled (Inputs) or calculated (Results) values.
     stats : dict[str, float]
@@ -42,16 +43,26 @@ class Property:
         Change the photo's gamma exposure.
     """
 
-    __slots__ = ("name", "prop_type", "distribution", "equation", "values", "stats")
+    __slots__ = (
+        "name",
+        "variable",
+        "prop_type",
+        "distribution",
+        "equation",
+        "values",
+        "stats"
+    )
 
     def __init__(
         self,
         name: str,
+        variable: str,
         distribution: str | None = None,
         equation: str | None = None,
         **kwargs
     ) -> None:
         self.name = name
+        self.variable = variable
         self.distribution = None
         self.equation = None
         self.values = 0
@@ -70,10 +81,16 @@ class Property:
             raise ValueError("Invalid property type")
 
     def __str__(self) -> str:
+        if self.prop_type == "input":
+            attr = "Distribution"
+            math = self.distribution.name
+        if self.prop_type == "result":
+            attr = "Equation"
+            math = self.equation
+
         return (
             f"{self.prop_type.upper()} PROPERTY {self.name}\n"
-            f"* Distribution: \n{self.distribution.name}\n"
-            f"* Equation: \n{self.equation}\n"
+            f"* {attr}: \n{math}\n"
             f"* Stats: {self.stats}"
         )
 
@@ -86,40 +103,64 @@ class Property:
     # Direct operations on property values
     def __add__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({self.name} + {other.name})")
+            new = Property(
+                f"({self.name} + {other.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = self.values + other.values
         else:
-            new = Property(f"({self.name} + {other})")
+            new = Property(
+                f"({self.name} + {other})",
+                f"{self.variable}_{other}"
+            )
             new.values = self.values + other
 
         return new
 
     def __sub__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({self.name} - {other.name})")
+            new = Property(
+                f"({self.name} - {other.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = self.values - other.values
         else:
-            new = Property(f"({self.name} - {other})")
+            new = Property(
+                f"({self.name} - {other})",
+                f"{self.variable}_{other}"
+            )
             new.values = self.values - other
 
         return new
 
     def __mul__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({self.name} * {other.name})")
+            new = Property(
+                f"({self.name} * {other.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = self.values * other.values
         else:
-            new = Property(f"({self.name} * {other})")
+            new = Property(
+                f"({self.name} * {other})",
+                f"{self.variable}_{other}"
+            )
             new.values = self.values * other
 
         return new
 
     def __truediv__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({self.name} / {other.name})")
+            new = Property(
+                f"({self.name} / {other.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = self.values / other.values
         else:
-            new = Property(f"({self.name} /{other})")
+            new = Property(
+                f"({self.name} /{other})",
+                f"{self.variable}_{other}"
+            )
             new.values = self.values / other
 
         return new
@@ -127,46 +168,70 @@ class Property:
     # Inverse operations on property values
     def __radd__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({other.name} + {self.name})")
+            new = Property(
+                f"({other.name} + {self.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = other.values + self.values
         else:
-            new = Property(f"({other} + {self.name})")
+            new = Property(
+                f"({other} + {self.name})",
+                f"{self.variable}_{other}"
+            )
             new.values = other + self.values
 
         return new
 
     def __rsub__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({other.name} - {self.name})")
+            new = Property(
+                f"({other.name} - {self.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = other.values - self.values
         else:
-            new = Property(f"({other} - {self.name})")
+            new = Property(
+                f"({other} - {self.name})",
+                f"{self.variable}_{other}"
+            )
             new.values = other - self.values
 
         return new
 
     def __rmul__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({other.name} * {self.name})")
+            new = Property(
+                f"({other.name} * {self.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = other.values * self.values
         else:
-            new = Property(f"({other} * {self.name})")
+            new = Property(
+                f"({other} * {self.name})",
+                f"{self.variable}_{other}"
+            )
             new.values = other * self.values
 
         return new
 
     def __rtruediv__(self, other):
         if isinstance(other, Property):
-            new = Property(f"({other.name} / {self.name})")
+            new = Property(
+                f"({other.name} / {self.name})",
+                f"{self.variable}_{other.variable}"
+            )
             new.values = other.values / self.values
         else:
-            new = Property(f"({other} / {self.name})")
+            new = Property(
+                f"({other} / {self.name})",
+                f"{self.variable}_{other}"
+            )
             new.values = other / self.values
 
         return new
 
     def __neg__(self):
-        new = Property(f"(-{self.name})")
+        new = Property(f"(-{self.name})", self.variable)
         new.values = -self.values
 
         return new
@@ -175,8 +240,11 @@ class Property:
         return evaluate(self.equation, kwargs)
 
     def calculate_stats(self) -> None:
-        """
-        Calculates values of specified statistical characteristics.
+        """Calculates values of statistical characteristics.
+
+        Specified statistical characteristics are:
+        Mean, Standard deviation, Percentiles, Median, Mode
+        and others.
         """
 
         self.stats["P90"] = np.percentile(self.values, 10)
@@ -185,240 +253,166 @@ class Property:
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
 
-    def run_calculation(self, **kwargs) -> dict[str, float]:
+    def run_calculation(self, **calc_kwargs) -> dict[str, float]:
+        """Starts the sampling of distribution or evaluation of string equation.
+
+        * For Properties with defined `distribution` attribute
+        samples the distribution with defined parameters.
+        * For Properties with defined `equation` attribute
+        evaluates the string equation using the `equation_parser` module.
+
+        Returns
+        -------
+        dict[str, float]
+            _description_
+        """
+
         if self.prop_type == "input":
-            self.values = self.distribution(**kwargs)
+            self.values = self.distribution(**calc_kwargs)
         if self.prop_type == "result":
-            self.values = self._evaluate_equation(**kwargs)
+            self.values = self._evaluate_equation(**calc_kwargs)
 
         self.calculate_stats()
 
         return self.stats
 
-    def to_json(
-        self, to_str: bool = True, exclude: tuple = ("name", "prop_type", "values", "stats")
-    ) -> str | None:
-        # slots = []
-        # for cls in reversed(type(self).__mro__):
-        #     cls_slots = getattr(cls, "__slots__", None)
-        #     if isinstance(cls_slots, str):
-        #         slots.append(cls_slots)
-        #     if isinstance(cls_slots, tuple):
-        #         slots.extend(cls_slots)
+    def update(self, **update_kwargs: dict) -> None:
+        """_summary_
 
-        json_dict = {
-            slot: deepcopy(getattr(self, slot)) for slot in self.__slots__ if slot not in exclude
+        _extended_summary_
+
+        Raises
+        ------
+        AttributeError
+            _description_
+        """
+
+        for attr, val in update_kwargs.items():
+            if hasattr(self, attr):
+                setattr(self, attr, val)
+            else:
+                raise AttributeError(f'Property has no attribute "{attr}".')
+
+    def serialize(
+        self, exclude: tuple | list = ("name", "prop_type", "values", "stats")
+    ) -> dict:
+        """_summary_
+
+        _extended_summary_
+
+        Parameters
+        ----------
+        exclude : tuple | list, optional
+            _description_, by default ("name", "prop_type", "values", "stats")
+
+        Returns
+        -------
+        dict
+            _description_
+        """
+
+        serial_dict = {
+            slot: deepcopy(getattr(self, slot))
+            for slot in self.__slots__
+            if slot not in exclude
         }
 
-        # Dictionary clean up
+        # Handle special serialization cases
         if self.distribution and "distribution" not in exclude:
-            json_dict["distribution"] = self.distribution.to_json()
-            del json_dict["equation"]
+            # Continue the serialization down the hierarchy
+            serial_dict["distribution"] = self.distribution.serialize()
+            del serial_dict["equation"]
         if self.equation and "equation" not in exclude:
-            del json_dict["distribution"]
+            del serial_dict["distribution"]
         if "values" not in exclude:
-            json_dict["values"] = json_dict["values"].tolist()
+            serial_dict["values"] = serial_dict["values"].tolist()
 
-        if to_str:
-            return json_dict
+        return serial_dict
 
-        with open(f"Random Property {self.name}.json", "w", encoding="utf-8") as fp:
-            json.dump(json_dict, fp=fp, indent=4)
+    def to_json(self, **serialize_kwargs) -> None:
+        """_summary_
+
+        _extended_summary_
+        """
+
+        with open(
+            f"Random Property {self.name}.json", "w", encoding="utf-8"
+        ) as fp:
+            json.dump(self.serialize(**serialize_kwargs), fp=fp, indent=4)
 
     @classmethod
-    def from_json(cls, io: TextIO):
-        if isinstance(io, dict):
-            json_dict = io
-        else:
-            if os.path.isfile(io):
-                with open(io, "r", encoding="utf-8") as fp:
-                    json_dict = json.load(fp=fp)
+    def deserialize(cls, serial_dict: TextIO, **kwargs) -> "Property":
+        """_summary_
 
-        json_dict["distribution"] = Distribution.from_json(json_dict["distribution"])
-        if json_dict.get("values", None):
-            json_dict["values"] = np.array(json_dict["values"])
+        _extended_summary_
 
-        name = json_dict.pop("name", "property")
-        distr = json_dict.pop("distribution", None)
-        eq = json_dict.pop("equation", None)
-        prop = cls(name, distribution=distr.name, equation=eq)
-        for slot, value in json_dict.items():
+        Parameters
+        ----------
+        io : TextIO
+            _description_
+
+        Returns
+        -------
+        Property
+            _description_
+
+        Raises
+        ------
+        TypeError
+            _description_
+        """
+
+        if not isinstance(serial_dict, dict):
+            raise TypeError(
+                "Can't perform deserialization from a non dictionary type."
+            )
+
+        # Handle special deserialization cases
+        distr = serial_dict.get("distribution", {}).get("name", None)
+        if distr:
+            # Continue the deserialization down the hierarchy
+            serial_dict["distribution"] = Distribution.deserialize(
+                serial_dict["distribution"], **kwargs
+            )
+        if serial_dict.get("values", None):
+            serial_dict["values"] = np.array(serial_dict["values"])
+
+        # Property object creation
+        name = serial_dict.pop("name", "property")
+        var = serial_dict.pop("variable", name.lower())
+        eq = serial_dict.pop("equation", None)
+        prop = cls(name, var, distribution=distr, equation=eq)
+        for slot, value in serial_dict.items():
             setattr(prop, slot, value)
-
-        # prop.run_calculation()  # Don't know how to do it properly yet
 
         return prop
 
+    @classmethod
+    def from_json(cls, io: TextIO) -> "Property":
+        """_summary_
 
-# class RandomProperty:
+        _extended_summary_
 
-#     __slots__ = ("name", "distribution", "values", "stats")
+        Parameters
+        ----------
+        io : TextIO
+            _description_
 
-#     def __init__(
-#         self,
-#         name: str,
-#         distribution: str,
-#         **kwargs,
-#     ) -> None:
-#         self.name = name
-#         self.distribution = None
-#         self.values = 0
-#         self.stats = {}
+        Returns
+        -------
+        Property
+            _description_
 
-#         num_samples = kwargs.pop("num_samples", 10000)
-#         self.distribution = Distribution(
-#             distribution, num_samples, **kwargs
-#         )
+        Raises
+        ------
+        FileNotFoundError
+            _description_
+        """
 
-#     def __str__(self) -> str:
-#         return (
-#             f"RANDOM PROPERTY {self.name}\n"
-#             f"* Distribution: \n{self.distribution}\n"
-#             f"* Stats: {self.stats}"
-#         )
+        if not os.path.isfile(io):
+            raise FileNotFoundError("No such file or directory exists.")
 
-#     def calculate_stats(self) -> None:
-#         """
-#         Calculates values of specified statistical characteristics.
-#         """
+        with open(io, "r", encoding="utf-8") as fp:
+            serial_dict = json.load(fp=fp)
 
-#         self.stats["P90"] = np.percentile(self.values, 10)
-#         self.stats["P50"] = np.percentile(self.values, 50)
-#         self.stats["P10"] = np.percentile(self.values, 90)
-#         self.stats["Mean"] = np.mean(self.values)
-#         self.stats["Std"] = np.std(self.values)
-
-#     def run_calculation(self, **kwargs) -> dict[str, float]:
-
-#         self.values = self.distribution(**kwargs)  # self._generate_values()
-#         self.calculate_stats()
-
-#         return self.stats
-
-#     def to_json(
-#         self, to_str: bool = True, exclude: tuple = ("name", "values", "stats")
-#     ) -> str | None:
-#         # slots = []
-#         # for cls in reversed(type(self).__mro__):
-#         #     cls_slots = getattr(cls, "__slots__", None)
-#         #     if isinstance(cls_slots, str):
-#         #         slots.append(cls_slots)
-#         #     if isinstance(cls_slots, tuple):
-#         #         slots.extend(cls_slots)
-
-#         json_dict = {
-#             slot: deepcopy(getattr(self, slot)) for slot in self.__slots__ if slot not in exclude
-#         }
-
-#         # Dictionary clean up
-#         if self.distribution and "distribution" not in exclude:
-#             json_dict["distribution"] = self.distribution.to_json()
-#         if "values" not in exclude:
-#             json_dict["values"] = json_dict["values"].tolist()
-
-#         if to_str:
-#             return json_dict
-
-#         with open(f"Random Property {self.name}.json", "w", encoding="utf-8") as fp:
-#             json.dump(json_dict, fp=fp, indent=4)
-
-#     @classmethod
-#     def from_json(cls, io: TextIO) -> "RandomProperty":
-#         if isinstance(io, dict):
-#             json_dict = io
-#         else:
-#             if os.path.isfile(io):
-#                 with open(io, "r", encoding="utf-8") as fp:
-#                     json_dict = json.load(fp=fp)
-
-#         json_dict["distribution"] = Distribution.from_json(json_dict["distribution"])
-#         if json_dict.get("values", None):
-#             json_dict["values"] = np.array(json_dict["values"])
-
-#         name = json_dict.pop("name", "property")
-#         rand_prop = cls(name, json_dict["distribution"].name)
-#         for slot, value in json_dict.items():
-#             setattr(rand_prop, slot, value)
-
-#         # rand_prop.run_calculation()  # Don't know how to do it properly yet
-
-#         return rand_prop
-
-
-# class ResultProperty:
-
-#     __slots__ = ("name", "equation", "values", "stats")
-
-#     def __init__(self, name: str, equation: str) -> None:
-#         self.name = name
-#         self.equation = None
-#         self.values = 0
-#         self.stats = {}
-
-#     def _calc(self) -> Literal[0]:
-#         return 0
-
-#     def _generate_values(self, **kwargs) -> None:
-#         self.values = evaluate(self.equation, kwargs)
-
-#     def calculate_stats(self) -> None:
-#         self.stats["P90"] = np.percentile(self.values, 10)
-#         self.stats["P50"] = np.percentile(self.values, 50)
-#         self.stats["P10"] = np.percentile(self.values, 90)
-#         self.stats["Mean"] = np.mean(self.values)
-
-#     def run_calculation(self, **kwargs) -> dict[str, float]:
-#         self._generate_values()
-#         self.calculate_stats()
-#         return self.stats
-
-#     def to_json(
-#         self, to_str: bool = True, exclude: tuple = ("name", "values", "info", "stats")
-#     ) -> str | None:
-#         slots = []
-#         for cls in reversed(type(self).__mro__):
-#             cls_slots = getattr(cls, "__slots__", None)
-#             if isinstance(cls_slots, str):
-#                 slots.append(cls_slots)
-#             if isinstance(cls_slots, tuple):
-#                 slots.extend(cls_slots)
-
-#         json_dict = {
-#             slot: deepcopy(getattr(self, slot)) for slot in slots if slot not in exclude
-#         }
-
-#         # Dictionary clean up
-#         if "values" not in exclude:
-#             json_dict["values"] = json_dict["values"].tolist()
-#         # del json_dict["info"]
-#         # json_dict["info"] = {name: arr.tolist() for name, arr in json_dict["info"].items()}
-
-#         if to_str:
-#             return json_dict
-
-#         with open(f"Result Property {self.name}.json", "w", encoding="utf-8") as fp:
-#             json.dump(json_dict, fp=fp, indent=4)
-
-#     @classmethod
-#     def from_json(cls, io: TextIO):
-#         if isinstance(io, dict):
-#             json_dict = io
-#         else:
-#             if os.path.isfile(io):
-#                 with open(io, "r", encoding="utf-8") as fp:
-#                     json_dict = json.load(fp=fp)
-
-#         # json_dict["values"] = np.array(json_dict["values"])
-#         # json_dict["info"] = {
-#         #     name: np.array(arr) for name, arr in json_dict["info"]
-#         # }
-
-#         name = json_dict.pop("name", "property")
-#         info_dict = json_dict.pop("info", {})
-#         res_prop = cls(name, info_dict)
-#         for slot, value in json_dict.items():
-#             setattr(res_prop, slot, value)
-
-#         # res_prop.run_calculation()  # Don't know how to do it properly yet
-
-#         return res_prop
+        return cls.deserialize(serial_dict)

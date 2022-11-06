@@ -1,12 +1,10 @@
 import json
 import os.path
-
-# import re
-# from ast import literal_eval
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Literal, TextIO
+from typing import Any, Callable, TextIO, Iterable
 
+import numpy as np
 from numpy.random import SeedSequence
 
 from PetroGeoSim.config_maker import config_maker
@@ -42,7 +40,7 @@ class Model:
         _description_
     """
 
-    __slots__ = ("name", "seed", "num_samples", "regions")  # "access"
+    __slots__ = ("name", "seed", "num_samples", "results", "regions")
 
     def __init__(
         self, name: str, seed: int | None = None, num_samples: int = 10000
@@ -50,20 +48,17 @@ class Model:
         self.name = name
         self.seed = SeedSequence(seed)
         self.num_samples = num_samples
+        self.results = {}
         self.regions = {}
-        # self.access = [
-        #     (reg_name, prop_name)
-        #     for reg_name, reg in self.regions.items()
-        #     for prop_name in reg.properties
-        #   ]
 
     def __str__(self) -> str:
+        props = self.get_all_properties('name', invert_dict=True)
         return (
             f'MODEL "{self.name}"\n'
             f"* Seed: {self.seed.entropy}\n"
             f"* Number of samples: {self.num_samples}\n"
             f"* Regions: {', '.join(self.regions.keys())}\n"
-            f"* Properties: {', '.join(self.get_all_properties('name', invert_dict=True))}"
+            f"* Properties: {', '.join(props)}"
         )
 
     def __eq__(self, other) -> bool:
@@ -75,56 +70,13 @@ class Model:
     def __contains__(self, other) -> bool:
         return other.name in self.regions
 
-    def _add_resolver(self, add_to: str | list | tuple) -> tuple | str | list:
-        """_summary_
-
-        _extended_summary_
+    def add_regions(self, *regions: tuple[Region]) -> None:
+        """Add a single or multiple Regions to the Model.
 
         Parameters
         ----------
-        add_to : str | list | tuple
-            _description_
-
-        Returns
-        -------
-        tuple | str | list
-            _description_
-
-        Raises
-        ------
-        KeyError
-            _description_
-        KeyError
-            _description_
-        TypeError
-            _description_
-        """
-
-        if isinstance(add_to, str):
-            if add_to == "all":
-                return tuple(self.regions.keys())
-            if add_to in self.regions:
-                return (add_to, )
-            raise KeyError(f'Region "{add_to}" not found in Model "{self.name}"')
-        if isinstance(add_to, (list, tuple)):
-            error_extra = set(add_to).issubset(self.regions.keys())
-            if not error_extra:
-                not_found = '", "'.join(set(add_to).difference(self.regions.keys()))
-                raise KeyError(
-                    f'Region(s) "{not_found}" not found in Model "{self.name}"'
-                )
-            return add_to
-        raise TypeError("Invalid `add_to` type, see documentation")
-
-    def add_region(self, region: Region) -> None:
-        """Add a single Region to the Model.
-
-        _extended_summary_
-
-        Parameters
-        ----------
-        region : Region
-            A defined `Region` object to be added
+        *regions : tuple[Region]
+            Positional arguments of defined `Region` objects.
 
         Raises
         ------
@@ -132,111 +84,65 @@ class Model:
             Can't add a `Region` with the same name.
         """
 
-        if region in self:
-            raise KeyError(
-                f'Encountered duplicate Region "{region.name}" '
-                f'in Model "{self.name}"'
-            )
+        for region in regions:
+            if region in self:
+                raise KeyError(
+                    f'Encountered duplicate Region "{region.name}" '
+                    f'in Model "{self.name}"'
+                )
 
-        for prop in region.inputs.values():  # reset_region() ???
-            if prop.prop_type == "input":
+            # Resets all properties' values and updates distribution attributes
+            for prop in region.inputs.values():  # reset_region() ???
                 prop.distribution.update(self.seed, self.num_samples)
-            prop.values = None
-        self.regions[region.name] = region
-
-    def add_regions(self, *regions: tuple[Region]) -> None:
-        """Add multiple Regions to the Model.
-
-        This method calls add_region() in a loop.
-
-        Parameters
-        ----------
-        *regions : tuple[Region]
-            Positional arguments of type `Region`
-        """
-
-        for reg in regions:
-            self.add_region(reg)
-
-    def add_property(
-        self,
-        prop: Property,
-        add_to: Literal["all"] | str | list[str] | tuple[str] = "all",
-    ) -> None:
-        """Add a single Property to the Model.
-
-        Calls private method `_add_resolver()` that handles various input types.
-
-        Parameters
-        ----------
-        prop : Property
-            _description_
-        add_to : Literal[&quot;all&quot;] | str | list[str] | tuple[str], optional
-            _description_, by default "all"
-        """
-
-        for reg in self._add_resolver(add_to):
-            if prop.prop_type == "input":
-                prop.distribution.update(self.seed, self.num_samples)
-            self.regions[reg].add_property(deepcopy(prop))
+                prop.values = 0
+            self.regions[region.name] = region
 
     def add_properties(
         self,
-        props: dict[Property, str | list[Property] | tuple[Property]]
-        | list[Property]
-        | tuple[Property],
+        *props_args: tuple[Property],
+        **props_kwargs: dict[str, list[Property] | tuple[Property]],
     ) -> None:
-        """Add multiple Properties to the Model.
+        """Add a single or multiple Properties to the Model.
 
         Properties are passed as a dictionary.
-        Calls add_property() method in a loop.
 
         Parameters
         ----------
-        props : dict[Property, str | list[Property] | tuple[Property]] 
-                | list[Property] | tuple[Property]
-            A dictionary with Properties as keys and string, list or tuple of Regions names.
+        *props_args : tuple[Property]
+            Positional arguments of defined `Property` objects.
+        **properties_kwargs : dict[str, list[Property] | tuple[Property]]
+            Keyword arguments with the following structure:
+            * Keys - names of `Region`s;
+            * Values - defined `Property` objects.
 
         Raises
         ------
         TypeError
-            _description_
+            Supplied positional or keyword arguments were not found.
         """
 
-        if isinstance(props, dict):
-            for prop, add_to in props.items():
-                self.add_property(prop, add_to)
-        elif isinstance(props, (list, tuple)):
-            for prop in props:
-                self.add_property(prop, "all")
-        else:
-            raise TypeError("Invalid `props` type, see documentation")
+        # Resets the spawned children count
+        self.seed = SeedSequence(self.seed.entropy)
 
-    # def add_result_property(self, prop_name: str, prop: Property) -> None:
-    #     """_summary_
+        # Handles the positional arguments
+        if props_args:
+            for region in self.regions.values():
+                region.add_properties(*deepcopy(props_args))
+                region.update_properties(self.seed, self.num_samples)
 
-    #     _extended_summary_
+        # Handles the keyword arguments
+        if props_kwargs:
+            for reg, props in props_kwargs.items():
+                if reg not in self.regions:
+                    raise KeyError(
+                        f'Region "{reg}" not found in Model "{self.name}"'
+                    )
+                if not isinstance(props, Iterable):  # string case handler
+                    props = (props,)
 
-    #     Parameters
-    #     ----------
-    #     prop_name : str
-    #         _description_
-    #     prop : Property
-    #         _description_
-
-    #     Raises
-    #     ------
-    #     TypeError
-    #         _description_
-    #     """
-
-    #     if not isinstance(prop_name, str):
-    #         raise TypeError("`prop_name` must be a string")
-
-    #     for reg in self.regions.values():
-    #         res_prop = prop(name=prop_name, info=reg.get_properties("values"))
-    #         res_prop.run_calculation()
-    #         reg.add_property(res_prop)
+                region = self.regions[reg]
+                region.add_properties(*deepcopy(props))
+                region.update_properties(self.seed, self.num_samples)
 
     def get_all_properties(
         self,
@@ -254,7 +160,7 @@ class Model:
         attribute : str
             The attribute to collect, used in getattr()
         include: str | tuple[str] | list[str], optional
-            What Properties in the dictionary:
+            What Properties to include in the dictionary:
             results, inputs or both, by default ("inputs", "results")
         invert : bool, optional
             Invert the dictionary: Property -> Region
@@ -274,21 +180,44 @@ class Model:
         for reg_name, reg in self.regions.items():
             all_properties[reg_name] = reg.get_properties(attribute, include)
             if invert_dict:
-                for prop_name, attr in all_properties[reg_name].items():
-                    attributes[prop_name][reg_name] = attr
+                for prop_id, attr in all_properties[reg_name].items():
+                    attributes[prop_id][reg_name] = attr
 
         if invert_dict:
             return dict(attributes)
 
         return all_properties
 
-    def result(self, how: str = "sum"):
-        model_results = {}
-        for reg in self.regions.values():
-            for res_name, res in reg.get_properties("values", "results").items():
-                model_results[res_name] = model_results.get(res_name, res) + res
+    def get_result(
+        self,
+        function: Callable[[list | tuple], list[float] | tuple[float]] = np.sum
+    ) -> dict[str, list[float]]:
+        """_summary_
 
-        return model_results
+        _extended_summary_
+
+        Parameters
+        ----------
+        function : Callable[[list | tuple], list[float] | tuple[float]], optional
+            _description_, by default numpy.sum.
+
+        Returns
+        -------
+        dict[str, list[float]]
+            _description_.
+        """
+
+        initial_result = self.get_all_properties(
+            "values", include="results", invert_dict=True
+        )
+
+        # Apply the function for all results only to their values
+        for res_name, res in initial_result.items():
+            self.results[res_name] = function(
+                tuple(res.values()), axis=0
+            )
+
+        return self.results
 
     def check_config(self, config: dict[str, Any]) -> bool:
         """Checks whether the supplied config is correct.
@@ -314,7 +243,25 @@ class Model:
             for prop_name, prop in reg.items():
                 config_test[reg_name][prop_name] = set(prop.keys())
 
+        # config_maker() uses sets
         return config_test == config_maker(self, user_input=False)
+
+    def update(self, **update_kwargs: dict) -> None:
+        """_summary_
+
+        _extended_summary_
+
+        Raises
+        ------
+        AttributeError
+            _description_
+        """
+
+        for attr, val in update_kwargs.items():
+            if hasattr(self, attr):
+                setattr(self, attr, val)
+            else:
+                raise AttributeError(f'Model has no attribute "{attr}".')
 
     def run(self, config: dict[str, Any]) -> None:
         """Runs all calculations in the Model
@@ -335,63 +282,79 @@ class Model:
         """
 
         if not self.check_config(config):
-            raise KeyError("Invalid key is present or a key is missing in the config")
+            raise KeyError(
+                "Invalid key is present or a key is missing in the config"
+            )
 
         for reg_name, reg in self.regions.items():
+            # Inputs calculation loop
             for prop_name, prop in reg.inputs.items():
                 result_property_config = config[reg_name][prop_name]
                 prop.run_calculation(**result_property_config)
+            # Results calculation loop
             for prop_name, prop in reg.results.items():
                 prop.run_calculation(
-                    **reg.get_properties("values", include="inputs")
+                    **reg.get_properties(
+                        "values", include="inputs", variable_key=True
+                    )
                 )
 
-    def to_json(self, to_str: bool = True, exclude: tuple | list = ()) -> dict | None:
-        """Serializes the `Model` into a JSON file or a dictionary.
+    def serialize(self, exclude: tuple | list = ("results", )) -> dict:
+        """Serializes the `Model` to a dictionary.
 
-        The generated file has a name `{Model.name}.json`.
+        The main method used in all other serialization types: to_json etc.
 
         Parameters
         ----------
-        to_str : bool, optional
-            Controls the output destination (string or file), by default True.
         exclude : tuple | list, optional
-             Attributes to not use during serialization, by default ().
+            Attributes to not use during serialization, by default ().
 
         Returns
         -------
-        dict | None
-            A serialized dictionary or None (writes to file).
+        dict
+            A serialized dictionary.
         """
 
-        json_dict = {
+        serial_dict = {
             slot: deepcopy(getattr(self, slot))
             for slot in self.__slots__
             if slot not in exclude
         }
 
-        # Dictionary clean up
-        json_dict["seed"] = json_dict["seed"].entropy
+        # Handle special serialization cases
+        if "seed" not in exclude:
+            serial_dict["seed"] = serial_dict["seed"].entropy
 
+        # Continue the serialization down the hierarchy
         for reg_name, reg in self.regions.items():
-            json_dict["regions"][reg_name] = reg.to_json()
+            serial_dict["regions"][reg_name] = reg.serialize()
 
-        if to_str:
-            return json_dict
+        return serial_dict
+
+    def to_json(self, **serialize_kwargs) -> None:
+        """Serializes the `Model` to a JSON file.
+
+        The generated file has a name `{Model.name}.json`.
+
+        Parameters
+        ----------
+        **serialize_kwargs : dict
+            Keyword arguments to pass on to serialize()
+        """
 
         with open(f"Model {self.name}.json", "w", encoding="utf-8") as fp:
-            json.dump(json_dict, fp=fp, indent=4)
+            json.dump(self.serialize(**serialize_kwargs), fp=fp, indent=4)
 
     @classmethod
-    def from_json(cls, io: TextIO) -> "Model":
-        """Creates/Deserializes the Model from a JSON file.
+    def deserialize(cls, serial_dict: TextIO) -> "Model":
+        """Creates/Deserializes the Model from a dictionary.
 
-        _extended_summary_
+        The main method used in all other deserialization types: from_json etc.
 
         Parameters
         ----------
         io : TextIO
-            A dictionary or a file path with the necessary data.
+            A dictionary with the necessary data.
 
         Returns
         -------
@@ -399,58 +362,50 @@ class Model:
             An initialized Model instance.
         """
 
-        if isinstance(io, dict):
-            json_dict = io
-        else:
-            if os.path.isfile(io):
-                with open(io, "r", encoding="utf-8") as fp:
-                    json_dict = json.load(fp=fp)
+        if not isinstance(serial_dict, dict):
+            raise TypeError(
+                "Can't perform deserialization from a non dictionary type."
+            )
 
-        for reg_name, reg in json_dict["regions"].items():
-            json_dict["regions"][reg_name] = Region.from_json(reg)
+        # Handle special deserialization cases
+        serial_dict["seed"] = SeedSequence(serial_dict["seed"])
 
-        json_dict["seed"] = SeedSequence(**json_dict["seed"])
+        # Continue the deserialization down the hierarchy
+        for reg_name, reg in serial_dict["regions"].items():
+            serial_dict["regions"][reg_name] = Region.deserialize(
+                reg, seed=serial_dict["seed"],
+                num_samples=serial_dict["num_samples"]
+            )
 
-        name = json_dict.pop("name", "model")
+        # Model object creation
+        name = serial_dict.pop("name", "model")
         model = cls(name)
-        for slot, value in json_dict.items():
+        for slot, value in serial_dict.items():
             setattr(model, slot, value)
 
         return model
 
-    def send_mygeomap(self):
-        return self.get_all_properties("values", include="results")
-
     @classmethod
-    def receive_mygeomap(cls, file):
-        if os.path.isfile(file):
-            with open(file, "r", encoding="utf-8") as fp:
-                setup_config = json.load(fp=fp)
+    def from_json(cls, io: TextIO) -> "Model":
+        """Creates/Deserializes the Model from a JSON file.
 
-        model = cls(
-            setup_config["name"],
-            setup_config["seed"],
-            setup_config["num_samples"]
-        )
+        Under the hood uses the deserialize() method.
 
-        run_config = defaultdict(dict)
-        for reg_name, reg_setup in setup_config["config"].items():
-            region = Region(reg_name, reg_setup["composition"])
-            model.add_region(region)
-            for prop_name, prop_setup in reg_setup["inputs"].items():
-                prop = Property(
-                    prop_name,
-                    distribution=prop_setup["distribution"]["name"]
-                )
-                model.add_property(prop, reg_name)
-                run_config[reg_name][prop_name] = prop_setup["distribution"]["params"]
-            for prop_name, prop_setup in reg_setup["results"].items():
-                prop = Property(
-                    prop_name,
-                    equation=prop_setup["equation"]
-                )
-            model.add_property(prop, reg_name)
+        Parameters
+        ----------
+        io : TextIO
+            _description_
 
-        model.run(run_config)
+        Returns
+        -------
+        Model
+            An initialized Model instance.
+        """
 
-        return model
+        if not os.path.isfile(io):
+            raise FileNotFoundError("No such file or directory exists.")
+
+        with open(io, "r", encoding="utf-8") as fp:
+            serial_dict = json.load(fp=fp)
+
+        return cls.deserialize(serial_dict)

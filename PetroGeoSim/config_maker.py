@@ -2,7 +2,6 @@ import re
 from collections import defaultdict
 
 from PetroGeoSim.distributions import DISTRIBUTIONS_KWARGS
-# from PetroGeoSim.properties import ResultProperty
 
 split_pat = re.compile(r"[\|\\\t _,/:;]+")
 

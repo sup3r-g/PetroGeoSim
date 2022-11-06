@@ -1,11 +1,8 @@
 import json
 from pathlib import Path
 
-# import numpy as np
-# import numpy.typing as npt
-
 # from PetroGeoSim.models import Model
-from PetroGeoSim.properties import Property  # RandomProperty, ResultProperty
+from PetroGeoSim.properties import Property
 
 
 class Templates:
@@ -40,12 +37,6 @@ class Templates:
         self.available = tuple(
             temp.stem for temp in Path('PetroGeoSim/templates/').iterdir()
         )
-
-    def _parse_equation(self):
-        """
-        Parses the equation into the AST.
-        """
-        pass
 
     def load(self, code: str) -> None:
         """Loads input and result Properties.
@@ -83,7 +74,17 @@ class Templates:
         Examples
         --------
         >>> template.show()
-
+        Inputs:
+        * Areas
+        * Reservoir thickness
+        * Porosity
+        * Oil saturation
+        * Net-to-gross
+        * Formation volume factor
+        * Oil density
+        * Geometric correction factor
+        Results:
+        * Total hydrocarbons in-place
         """
 
         result = ''
@@ -103,7 +104,8 @@ class Templates:
         Returns
         -------
         dict
-            _description_
+            A dictionary with requested properties in the following format:
+            Readable name -> Initialized Property object.
 
         Examples
         --------
@@ -114,11 +116,14 @@ class Templates:
         template_props = {}
 
         for opt in props:
-            if opt in self.templates.values():
-                template_props[opt] = (
-                    Property(
-                        opt, self.templates[opt]
-                    )
+            if opt in self.templates["Inputs"]:
+                template_props[opt] = Property(
+                    opt, self.templates["Inputs"][opt]
+                )
+            if opt in self.templates["Results"]:
+                var, eq = self.templates["Results"][opt]
+                template_props[opt] = Property(
+                    opt, var, equation=eq
                 )
             else:
                 print(
@@ -127,49 +132,9 @@ class Templates:
 
         return template_props
 
-    def create(self, name: str, var_name: str, formula: str, code: str = 'ru'):
+    def create(self, name: str, variable: str, formula: str, code: str = 'ru'):
         """
         Creates new input or/and result Properties and
         add them to a specified language code JSON.
         """
         pass
-
-
-# class OriginalOilInPlace(ResultProperty):
-
-#     __slots__ = ("info")
-
-#     def __init__(
-#         self,
-#         name: str,
-#         info: dict[str, npt.NDArray],
-#         *args,
-#         **kwargs
-#     ) -> None:
-#         super().__init__(name, *args, **kwargs)
-#         self.info = info
-
-#     def _calc(self) -> npt.NDArray[np.floating]:
-#         phi = self.info["Porosity"]
-#         area = self.info["Area"]
-#         s_w = self.info["Sw"]
-#         ooip = area * phi * (1.0 - s_w)
-#         return ooip
-
-
-# class ModelOriginalOilInPlace(ResultProperty):
-
-#     __slots__ = ("model")
-
-#     def __init__(self, model: Model, name: str, *args, **kwargs) -> None:
-#         super().__init__(name, *args, **kwargs)
-#         self.model = model
-
-#     def _calc(self) -> np.typing.NDArray[np.floating]:
-#         return np.sum(
-#             [
-#                 reg.results["OOIP"].values
-#                 for reg in self.model.regions.values()
-#             ],
-#             axis=0,
-#         )

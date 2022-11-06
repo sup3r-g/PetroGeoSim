@@ -1,19 +1,11 @@
-from ast import literal_eval
-from copy import deepcopy
 import json
 import os
-import re
+from copy import deepcopy
 from typing import Any, TextIO
-from scipy.stats import (
-    beta,
-    lognorm,
-    norm,
-    triang,
-    truncnorm,
-    uniform,
-)
-from numpy.random import SeedSequence, default_rng
+
 from numpy import exp
+from numpy.random import SeedSequence, default_rng
+from scipy.stats import beta, lognorm, norm, triang, truncnorm, uniform
 
 DISTRIBUTIONS_KWARGS = {
     "uniform": {"min", "max"},
@@ -46,13 +38,13 @@ class Distribution:
 
     Methods
     -------
-    update(seed, num_samples)
+    _init_func(seed, num_samples)
         Represent the photo in the given colorspace.
-    gamma(n=1.0)
+    _intersept_kwargs(n=1.0)
         Change the photo's gamma exposure.
-    gamma(n=1.0)
+    update(n=1.0)
         Change the photo's gamma exposure.
-    gamma(n=1.0)
+    serialize(n=1.0)
         Change the photo's gamma exposure.
     """
 
@@ -183,62 +175,56 @@ class Distribution:
         self.seed = seed.spawn(1)[0]
         self.rng = default_rng(self.seed)
 
-    def to_json(
+    def serialize(
         self,
-        to_str: bool = True,
         exclude: tuple | list = (
-            "rng",
-            "function",
             "num_samples",
             "seed"
         )
-    ) -> str | None:
-        """Serializes the `Distribution` into a JSON file or a dictionary.
-
-        The generated file has a name `{Distribution.name}.json`.
+    ) -> dict:
+        """Serializes the `Distribution` into a dictionary.
 
         Parameters
         ----------
         to_str : bool, optional
             Controls the output destination (string or file), by default True.
         exclude : tuple | list, optional
-            Attributes to not use during serialization, by default ( "rng", "function", "num_samples", "seed" ).
+            Attributes to not use during serialization,
+            by default ( "num_samples", "seed" ).
 
         Returns
         -------
-        str | None
-            A serialized dictionary or None (writes to file).
+        dict
+            A serialized dictionary.
         """
+        not_serializable = ("rng", "function")
 
-        json_dict = {
+        serial_dict = {
             slot: deepcopy(getattr(self, slot))
             for slot in self.__slots__
-            if slot not in exclude
+            if slot not in exclude+not_serializable
         }
 
-        # SeedSequence parser using RegEx
+        # Handle special serialization cases
         if "seed" not in exclude:
-            seed_pat = re.compile(r"\(?,?\s+\)?")
-            res = re.split(seed_pat, repr(json_dict["seed"]))
-            seed_kw = {}
-            for part in res[1:-1]:
-                k, v = part.split("=")
-                seed_kw[k] = literal_eval(v)
+            serial_dict["seed"] = serial_dict["seed"].entropy
 
-            # Dictionary clean up
-            json_dict["seed"] = json_dict["seed"].entropy  # seed_kw
+        return serial_dict
 
-        if to_str:
-            return json_dict
+    def to_json(self, **serialize_kwargs) -> None:
+        """_summary_
+
+        The generated file has a name `{Distribution.name}.json`.
+        """
 
         with open(
             f"Distribution {self.name}.json",
             "w", encoding="utf-8"
         ) as fp:
-            json.dump(json_dict, fp=fp, indent=4)
+            json.dump(self.serialize(**serialize_kwargs), fp=fp, indent=4)
 
     @classmethod
-    def from_json(cls, io: TextIO, **kwargs) -> "Distribution":
+    def deserialize(cls, serial_dict: TextIO, **kwargs) -> "Distribution":
         """Creates/Deserializes the `Distribution` from a JSON file.
 
         _extended_summary_
@@ -254,19 +240,41 @@ class Distribution:
             An initialized `Distribution` instance.
         """
 
-        if isinstance(io, dict):
-            json_dict = io
+        if not isinstance(serial_dict, dict):
+            raise TypeError(
+                "Can't perform deserialization from a non dictionary type."
+            )
+
+        # Handle special deserialization cases
+        # Update seed with model seed sent via kwargs
+        seed_sequence = kwargs.pop("seed", None)
+        if seed_sequence:
+            serial_dict["seed"] = seed_sequence.spawn(1)[0]
         else:
-            if os.path.isfile(io):
-                with open(io, "r", encoding="utf-8") as fp:
-                    json_dict = json.load(fp=fp)
+            # Update seed using the serialized one or none at all
+            serial_dict["seed"] = SeedSequence(
+                serial_dict.pop("seed", None)
+            )
+        # Number of samples from dictionary or those sent via kwargs
+        serial_dict["num_samples"] = serial_dict.pop(
+            "num_samples", kwargs.pop("num_samples", None)
+        )
+        serial_dict["rng"] = default_rng(serial_dict["seed"])
 
-        json_dict["seed"] = SeedSequence(**json_dict["seed"])
-        json_dict["rng"] = default_rng(json_dict["seed"])
-
-        name = json_dict.pop("name", "normal")
+        # Distribution object creation
+        name = serial_dict.pop("name", "normal")
         distrib = cls(name)
-        for slot, value in json_dict.items():
+        for slot, value in serial_dict.items():
             setattr(distrib, slot, value)
 
         return distrib
+
+    @classmethod
+    def from_json(cls, io: TextIO) -> "Distribution":
+        if not os.path.isfile(io):
+            raise FileNotFoundError("No such file or directory exists.")
+
+        with open(io, "r", encoding="utf-8") as fp:
+            serial_dict = json.load(fp=fp)
+
+        return cls.deserialize(serial_dict)

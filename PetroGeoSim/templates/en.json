@@ -1,0 +1,22 @@
+{
+    "Inputs": {
+        "Areas": "s",
+        "Total thickness": "h",
+        "Reservoir thickness": "hef",
+        "Porosity": "poro",
+        "Oil saturation": "s_o",
+        "Water saturation": "s_w",
+        "Net-to-gross": "ntg",
+        "Formation volume factor": "fvf",
+        "Expansion factor": "ef",
+        "Oil density": "den",
+        "Geometric correction factor": "geomf",
+        "Top depth": "top_depth",
+        "Bottom depth": "bottom_depth",
+        "Oil-water contact": "owc",
+        "Gas-water contact": "gwc"
+    },
+    "Results": {
+        "Total hydrocarbons in-place": "s*hef*poro*s_o*ef*den"
+    }
+}
