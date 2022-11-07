@@ -1,0 +1,33 @@
+Юнит-тестирование модуля PetroGeoSim
+
+Задача:
+Написать юнит-тесты для методов классов в пакете PetroGeoSim с использованием библиотеки unittest
+
+План выполнения:
+1) склонировать репозиторий, ссылка https://github.com/sup3r-g/PetroGeoSim/tree/dev/PetroGeoSim
+2) зайти в директорию проекта, выбрать ветку dev (в консоли команда gic checkout dev)
+3) зайти в директорию PetroGeosim/tests
+4) в данной директории создать .py файл для тестируемого класса (например, test_model.py)
+Пример кода для тестов:
+
+import unittest
+from PetroGeoSim.models import Model
+from PetroGeoSim.regions import Region
+
+class TestModel(unittest.TestCase):
+  #setUp method is overridden from the parent class TestCase
+  def setUp(self):
+    self.model = Model()
+  #Each test method starts with the keyword test_
+  def test_add_region(self):
+    self.model.add_region(Region("A", "Sandstone"))
+    self.assertTrue()
+    self.assertFalse()
+
+Особенности:
+> тестами нужно покрыть как можно больше методов
+> для методов необходимо сделать максимально полное покрытие тестами для всех отдельных кейсов
+> пример использования и различные сценарии можно брать на основе Jupyter Notebook PetroGeoSim Probabilistic Reserves RU.ipynb
+
+Ссылки:
+- статья на хабр о быстром онбординге в юнит-тесты
