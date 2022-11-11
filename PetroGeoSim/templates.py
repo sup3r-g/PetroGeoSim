@@ -1,9 +1,13 @@
 import json
 from pathlib import Path
+import os
 
-# from PetroGeoSim.models import Model
 from PetroGeoSim.properties import Property
 
+TEMPLATES_PATH = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), 
+    "templates"
+)
 
 class Templates:
     """Offers a way to work with templates of inputs and results.
@@ -35,7 +39,7 @@ class Templates:
     def __init__(self) -> None:
         self.templates = {}
         self.available = tuple(
-            temp.stem for temp in Path('PetroGeoSim/templates/').iterdir()
+            temp.stem for temp in Path(TEMPLATES_PATH).iterdir()
         )
 
     def load(self, code: str) -> None:
@@ -62,7 +66,7 @@ class Templates:
         if code not in self.available:
             raise KeyError(f"No template found for code {code}")
 
-        with open(f"PetroGeoSim/templates/{code}.json",
+        with open(os.path.join(TEMPLATES_PATH, f"{code}.json"),
                   "r", encoding='utf8') as fp:
             self.templates = json.load(fp=fp)
 
