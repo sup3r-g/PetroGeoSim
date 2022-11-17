@@ -1,16 +1,18 @@
 import json
 import os.path
+import re
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, TextIO, Iterable
+from typing import Any, Callable, Iterable, TextIO
 
 import numpy as np
 from numpy.random import SeedSequence
 
-from PetroGeoSim.config_maker import config_maker
+from PetroGeoSim.distributions import DISTRIBUTIONS_KWARGS
 from PetroGeoSim.properties import Property
 from PetroGeoSim.regions import Region
 
+split_pat = re.compile(r"[\|\\\t _,/:;]+")
 
 class Model:
     """Main container class that houses 'Regions' and their 'Properties'.
@@ -219,6 +221,50 @@ class Model:
 
         return self.results
 
+    def make_config(self, user_input: bool = True) -> dict[str, Any]:
+        """Makes the config for the run() method.
+
+        _extended_summary_
+
+        Parameters
+        ----------
+        user_input : bool, optional
+            Whether to ask for user input or not, by default True
+
+        Returns
+        -------
+        dict[str, Any]
+            A dictionary containing the full config or just the parameters without values
+        """
+        
+        config = {}
+        for reg_name, reg in self.regions.items():
+            props = defaultdict(dict)
+            for prop_name, prop in reg.inputs.items():
+                if user_input:
+                    # With user input
+                    param_hint = ", ".join(
+                        DISTRIBUTIONS_KWARGS[prop.distribution.name]
+                    )
+                    params_str = input(
+                        f"Input distribution parameters for ( {param_hint} ) "
+                        f"of Property {prop_name} in Region {reg_name}"
+                    )
+                    for param, value in zip(
+                        DISTRIBUTIONS_KWARGS[prop.distribution.name],
+                        re.split(split_pat, params_str),
+                    ):
+                        props[prop_name][param] = float(value)
+                else:
+                    # Without user input
+                    props[prop_name] = DISTRIBUTIONS_KWARGS[
+                        prop.distribution.name
+                    ]
+
+            config[reg_name] = dict(props)
+
+        return config
+    
     def check_config(self, config: dict[str, Any]) -> bool:
         """Checks whether the supplied config is correct.
 
@@ -243,8 +289,8 @@ class Model:
             for prop_name, prop in reg.items():
                 config_test[reg_name][prop_name] = set(prop.keys())
 
-        # config_maker() uses sets
-        return config_test == config_maker(self, user_input=False)
+        # make_config() uses sets
+        return config_test == self.make_config(user_input=False)
 
     def update(self, **update_kwargs: dict) -> None:
         """_summary_
