@@ -6,13 +6,10 @@ from PetroGeoSim.regions import Region
 class TestModel(unittest.TestCase):
     # setUp method is overridden from the parent class TestCase
     def setUp(self):
-        self.model = Model('lolol')
+        self.model = Model('name')
 
     # Each test method starts with the keyword test_
-    def test_serialize(self):
-        a = tuple('A')
-        b = self.model.serialize(a)
-        self.assertEquals(type(dict()), b)
+
     def test_add_regions(self):
       """В PetroGeoSim Probabillistic Reserves RU сказано, что нельзя добавлять
       два региона с одинаковыми именами. В данной функции я создал два региона
