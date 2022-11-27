@@ -11,7 +11,10 @@ class TestModel(unittest.TestCase):
     # Each test method starts with the keyword test_
 
     def test_add_regions(self):
-      """В PetroGeoSim Probabillistic Reserves RU сказано, что нельзя добавлять
+      """
+      CHECK FOR PEP8, indentation must by 4 spaces!!!
+
+      В PetroGeoSim Probabillistic Reserves RU сказано, что нельзя добавлять
       два региона с одинаковыми именами. В данной функции я создал два региона
       с одинаковыми именами и разными составами. При этом никакой ошибки не
       возникает.
@@ -19,6 +22,7 @@ class TestModel(unittest.TestCase):
 
       region_1 = Region('A','Sandstone')
       region_2 = Region('A','Dolomite')
-      print(region_1)
-      print(region_2)
+      print(region_1)  # print in test is redundant
+      print(region_2)  # print in test is redundant
       self.assertTrue(region_1 == region_2)
+      # add assertFalse condition (if not your test will always show true)
