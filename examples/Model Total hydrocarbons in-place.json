@@ -11,8 +11,8 @@
                     "distribution": {
                         "name": "uniform",
                         "params": {
-                            "min": 100.0,
-                            "max": 1000.0
+                            "left": 100.0,
+                            "right": 1000.0
                         }
                     }
                 },
@@ -21,8 +21,8 @@
                     "distribution": {
                         "name": "truncated normal",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.4812,
+                            "left": 0.0,
+                            "right": 0.4812,
                             "mean": 0.0929,
                             "std": 0.0108
                         }
@@ -33,8 +33,8 @@
                     "distribution": {
                         "name": "triangular",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.15,
+                            "left": 0.0,
+                            "right": 0.15,
                             "mode": 0.05
                         }
                     }
@@ -55,8 +55,8 @@
                     "distribution": {
                         "name": "uniform",
                         "params": {
-                            "min": 20.0,
-                            "max": 200.0
+                            "left": 20.0,
+                            "right": 200.0
                         }
                     }
                 },
@@ -65,8 +65,8 @@
                     "distribution": {
                         "name": "truncated normal",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.4812,
+                            "left": 0.0,
+                            "right": 0.4812,
                             "mean": 0.1,
                             "std": 0.1
                         }
@@ -77,8 +77,8 @@
                     "distribution": {
                         "name": "triangular",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.2,
+                            "left": 0.0,
+                            "right": 0.2,
                             "mode": 0.1
                         }
                     }
@@ -99,8 +99,8 @@
                     "distribution": {
                         "name": "uniform",
                         "params": {
-                            "min": 200.0,
-                            "max": 1000.0
+                            "left": 200.0,
+                            "right": 1000.0
                         }
                     }
                 },
@@ -109,8 +109,8 @@
                     "distribution": {
                         "name": "truncated normal",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.4812,
+                            "left": 0.0,
+                            "right": 0.4812,
                             "mean": 0.08,
                             "std": 0.02
                         }
@@ -121,8 +121,8 @@
                     "distribution": {
                         "name": "triangular",
                         "params": {
-                            "min": 0.0,
-                            "max": 0.15,
+                            "left": 0.0,
+                            "right": 0.15,
                             "mode": 0.05
                         }
                     }

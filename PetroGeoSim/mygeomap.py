@@ -4,12 +4,8 @@ from PetroGeoSim.models import Model
 
 
 def send_mygeomap(model: Model) -> dict[str, dict]:
-    initial_result = model.get_all_properties(
-        "values", include=("inputs", "results")
-    )
-    initial_stats = model.get_all_properties(
-        "stats", include=("inputs", "results")
-    )
+    initial_result = model.get_all_properties("values", include=("inputs", "results"))
+    initial_stats = model.get_all_properties("stats", include=("inputs", "results"))
 
     # Converts all NumPy arrays to lists (to enable serialization)
     final_result = defaultdict(dict)
@@ -17,7 +13,11 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
         for prop, vals in props.items():
             final_result[reg][prop] = {
                 "values": vals.tolist(),
-                "stats": initial_stats[reg][prop].copy()
+                "stats": {
+                    "P90": (initial_stats[reg][prop]["P10"], 90),
+                    "P50": (initial_stats[reg][prop]["P50"], 50),
+                    "P10": (initial_stats[reg][prop]["P90"], 10),
+                },
             }
 
     return dict(final_result)

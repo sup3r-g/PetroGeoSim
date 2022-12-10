@@ -8,12 +8,12 @@ from numpy.random import SeedSequence, default_rng
 from scipy.stats import beta, lognorm, norm, triang, truncnorm, uniform
 
 DISTRIBUTIONS_KWARGS = {
-    "uniform": {"min", "max"},
+    "uniform": {"left", "right"},
     "normal": {"mean", "std"},
-    "beta": {"a", "b", "min", "max"},
+    "beta": {"a", "b", "left", "right"},
     "lognormal": {"std", "shift", "mean"},
-    "triangular": {"mode", "min", "max"},
-    "truncated normal": {"min", "max", "mean", "std"},
+    "triangular": {"mode", "left", "right"},
+    "truncated normal": {"left", "right", "mean", "std"},
 }
 
 
