@@ -14,6 +14,7 @@ from PetroGeoSim.regions import Region
 
 split_pat = re.compile(r"[\|\\\t _,/:;]+")
 
+
 class Model:
     """Main container class that houses 'Regions' and their 'Properties'.
 
@@ -236,7 +237,7 @@ class Model:
         dict[str, Any]
             A dictionary containing the full config or just the parameters without values
         """
-        
+
         config = {}
         for reg_name, reg in self.regions.items():
             props = defaultdict(dict)
@@ -264,7 +265,7 @@ class Model:
             config[reg_name] = dict(props)
 
         return config
-    
+
     def check_config(self, config: dict[str, Any]) -> bool:
         """Checks whether the supplied config is correct.
 

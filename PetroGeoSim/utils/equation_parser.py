@@ -2,6 +2,8 @@ import ast
 import operator
 from typing import Any, Dict
 
+from numpy import ndarray
+
 
 class FormulaError(Exception):
     pass
@@ -104,7 +106,7 @@ def eval_name(source: str, node: ast.Name, variables: Dict[str, Any]) -> float:
     name = variables.get(node.id, None)  # variables[node.id]
     if isinstance(name, (float, int)):
         return float(name)
-    if name.all():
+    if isinstance(name, ndarray):
         return name
 
     raise FormulaSyntaxError.from_ast_node(

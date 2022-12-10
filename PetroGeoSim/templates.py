@@ -5,9 +5,10 @@ import os
 from PetroGeoSim.properties import Property
 
 TEMPLATES_PATH = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), 
+    os.path.abspath(os.path.dirname(__file__)),
     "templates"
 )
+
 
 class Templates:
     """Offers a way to work with templates of inputs and results.

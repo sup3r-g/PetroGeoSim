@@ -247,9 +247,12 @@ class Property:
         and others.
         """
 
-        self.stats["P90"] = np.percentile(self.values, 10)
-        self.stats["P50"] = np.percentile(self.values, 50)
-        self.stats["P10"] = np.percentile(self.values, 90)
+        percents = ((10, 50, 90), ("P10", "P50", "P90"))
+        percentiles = np.percentile(
+            self.values, percents[0], method="closest_observation"
+        )
+        self.stats.update(dict(zip(percents[1], percentiles)))
+
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
 

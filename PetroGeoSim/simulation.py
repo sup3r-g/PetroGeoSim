@@ -68,19 +68,18 @@ class Simulation:
         model.run(model_config)
 
         return model
-    
+
     def _spawn_simulations(self) -> None:
         for i, model in enumerate(self.models):
             single_simulation = deepcopy(self)
             single_simulation.update(
-                name = f"{self.name}_sub_{i}",
-                mode = "single",
-                models = {model.name: model}
+                name=f"{self.name}_sub_{i}",
+                mode="single",
+                models={model.name: model}
             )
             single_simulation.run()
 
         return 
-        
 
     def add_models(self, *models: tuple[Model]) -> None:
         """_summary_
@@ -98,7 +97,7 @@ class Simulation:
                 "Can't add more than one model when ",
                 "not in single model mode ('mode' set to 'single')"
             )
-        
+
         for model in models:
             if model in self.models:
                 raise KeyError(
@@ -151,7 +150,7 @@ class Simulation:
                 seed=self.sim_seed,
                 num_samples=self.num_samples
             )
-            
+
             return model
 
         # Multi model simulation case

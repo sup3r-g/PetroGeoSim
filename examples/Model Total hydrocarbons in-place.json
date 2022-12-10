@@ -1,0 +1,139 @@
+{
+    "name": "Total hydrocarbons in-place",
+    "seed": 300,
+    "num_samples": 100000,
+    "regions": {
+        "A": {
+            "composition": "Sandstone",
+            "inputs": {
+                "Area": {
+                    "variable": "s",
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 100.0,
+                            "max": 1000.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "variable": "poro",
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.0929,
+                            "std": 0.0108
+                        }
+                    }
+                },
+                "Sw": {
+                    "variable": "sw",
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.15,
+                            "mode": 0.05
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "variable": "v",
+                    "equation": "s * poro * (1.0 - sw)"
+                }
+            }
+        },
+        "B": {
+            "composition": "Carbonate",
+            "inputs": {
+                "Area": {
+                    "variable": "s",
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 20.0,
+                            "max": 200.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "variable": "poro",
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.1,
+                            "std": 0.1
+                        }
+                    }
+                },
+                "Sw": {
+                    "variable": "sw",
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.2,
+                            "mode": 0.1
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "variable": "v",
+                    "equation": "s * poro * (1.0 - sw)"
+                }
+            }
+        },
+        "C": {
+            "composition": "Dolomite",
+            "inputs": {
+                "Area": {
+                    "variable": "s",
+                    "distribution": {
+                        "name": "uniform",
+                        "params": {
+                            "min": 200.0,
+                            "max": 1000.0
+                        }
+                    }
+                },
+                "Porosity": {
+                    "variable": "poro",
+                    "distribution": {
+                        "name": "truncated normal",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.4812,
+                            "mean": 0.08,
+                            "std": 0.02
+                        }
+                    }
+                },
+                "Sw": {
+                    "variable": "sw",
+                    "distribution": {
+                        "name": "triangular",
+                        "params": {
+                            "min": 0.0,
+                            "max": 0.15,
+                            "mode": 0.05
+                        }
+                    }
+                }
+            },
+            "results": {
+                "Total hydrocarbons in-place": {
+                    "variable": "v",
+                    "equation": "s * poro * (1.0 - sw)"
+                }
+            }
+        }
+    }
+}
