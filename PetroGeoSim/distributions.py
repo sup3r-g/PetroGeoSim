@@ -129,7 +129,7 @@ class Distribution:
             hence it is not supported yet.
         """
 
-        left, right = kwargs.get("min"), kwargs.get("max")
+        left, right = kwargs.get("left"), kwargs.get("right")
         mean, std = kwargs.get("mean"), kwargs.get("std")
         a, b = kwargs.get("a"), kwargs.get("b")
         shift = kwargs.get("shift")

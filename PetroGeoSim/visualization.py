@@ -33,7 +33,7 @@ def visualize_model(model: Model, bins: int | str = "auto", **mpl_kwargs) -> Non
         hist, bin_edges = np.histogram(values, bins=bins, density=True)
         pdf_norm = hist * 100 / hist.sum()
         sf = 100 - pdf_norm.cumsum()
-        percentiles = np.percentile(values, (10, 50, 90), method="closest_observation")[
+        percentiles = np.percentile(values, (10, 50, 90), method="median_unbiased")[
             ::-1
         ]
 
@@ -89,7 +89,7 @@ def visualize_input_properties(
     bins : int | str, optional
         _description_, by default "auto"
     """
-    figsize = mpl_kwargs.pop("figsize", (40, 30))
+    figsize = mpl_kwargs.pop("figsize", (20, 60))
 
     properties = model.get_all_properties("values", include="inputs", invert_dict=True)
     _, axs = plt.subplots(
@@ -135,7 +135,7 @@ def visualize_result_properties(
     bins : int | str, optional
         _description_, by default "auto"
     """
-    figsize = mpl_kwargs.pop("figsize", (20, 10))
+    figsize = mpl_kwargs.pop("figsize", (10, 20))
 
     properties = model.get_all_properties(
         "values", include="results", invert_dict=False
@@ -155,7 +155,7 @@ def visualize_result_properties(
         hist, bin_edges = np.histogram(values, bins=bins, density=True)
         pdf_norm = hist * 100 / hist.sum()
         sf = 100 - pdf_norm.cumsum()
-        percentiles = np.percentile(values, (10, 50, 90), method="closest_observation")[
+        percentiles = np.percentile(values, (10, 50, 90), method="median_unbiased")[
             ::-1
         ]
 

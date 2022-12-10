@@ -249,7 +249,7 @@ class Property:
 
         percents = ((10, 50, 90), ("P10", "P50", "P90"))
         percentiles = np.percentile(
-            self.values, percents[0], method="closest_observation"
+            self.values, percents[0], method="median_unbiased"
         )
         self.stats.update(dict(zip(percents[1], percentiles)))
 
