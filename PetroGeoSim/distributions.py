@@ -141,7 +141,7 @@ class Distribution:
             case "normal":  # loc = Mean (mu), scale = Standard Deviation (sigma)
                 return {"loc": mean, "scale": std}
             case "beta":  # mode = (a - 1) / (a + b - 2) ; b = (a - 1 - (a - 2)*mode) / mode --->> a = shift+1, b = (a - 1 - (a - 2)*mode) / mode
-                return {"a": a, "b": b, "loc": left, "scale": right}
+                return {"a": a, "b": b, "loc": left, "scale": right - left}
             case "lognormal":  # s = sigma, scale = exp(mu), loc = shift (left boundary position)
                 return {"s": std, "loc": shift, "scale": exp(mean)}
             case "triangular":  # c = (mode - left) / (right - left), loc = left, scale = right - left, c=[0, 1]
